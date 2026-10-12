@@ -6,13 +6,14 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-24.04
-    timeout-minutes: 90
+    timeout-minutes: 240
     env:
       PS5_PAYLOAD_SDK: /opt/ps5-payload-sdk
       BOILERPLATE_DIR: ${{ github.workspace }}/.deps/ps5-native-app-boilerplate
       MKPFS_DIR: ${{ github.workspace }}/.deps/MkPFS
       LLVM_CONFIG: llvm-config-18
       OUT_DIR: ${{ github.workspace }}/out
+      USE_CCACHE: "0"
     steps:
       - uses: actions/checkout@v4
 
@@ -40,32 +41,4 @@ jobs:
           mkdir -p .deps && cd .deps
           git clone https://github.com/blackbearreloaded/ps5-native-app-boilerplate
           cd ps5-native-app-boilerplate
-          git checkout 2f672d1c2f508e26f82ce6e27cef289a0861413c
-          [ -f runtime/libc.prx ] || bash tools/rebuild-libc.sh
-          echo "e6ff45d16adf687855cc3b33b0c8a4132b6504360b221e0a34c7e99fb3ba0036  runtime/libc.prx" | sha256sum -c -
-          bash tools/build-host-tools.sh
-
-      - name: MkPFS 1.1.0 (pinned commit)
-        run: |
-          cd .deps
-          git clone https://github.com/PSBrew/MkPFS
-          cd MkPFS
-          git checkout 1d5df56ae29390900e888fa12e5f9856aa797adc
-          python3 -m venv .venv
-          . .venv/bin/activate
-          if [ -f pyproject.toml ] || [ -f setup.py ]; then pip install .; else pip install -r requirements.txt; fi
-          printf '#!/usr/bin/env bash\ncd "%s" || exit 1\nexec "%s/.venv/bin/python" -m mkpfs "$@"\n' "$PWD" "$PWD" > .mkpfs-run
-          chmod +x .mkpfs-run
-          .mkpfs-run -V
-
-      - name: Build
-        run: |
-          export MKPFS="$MKPFS_DIR/.mkpfs-run"
-          bash Nuvio-maxd-releases-main/source/native-app/gl/build.sh PPSA99288 "Nuvio Max'd"
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: PPSA99288-shadowmount
-          path: |
-            out/PPSA99288.zip
-            out/PPSA99288.ffpfsc
+          git checkout 2f672d1c2f508e26f82ce6e
